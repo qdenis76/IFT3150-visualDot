@@ -1,2 +1,2 @@
-IFT3150-dotGraphViewer
+IFT3150-visualDot
 ======================

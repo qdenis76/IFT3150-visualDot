@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link href="css/jquery/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <link href="css/jquery/jquery.contextMenu.css" rel="stylesheet" type="text/css" />
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+    <script src="js/jquery/jquery.js" type="text/javascript"></script>
+    <script src="js/jquery/jquery-ui.js" type="text/javascript"></script>
+    <script src="js/d3/d3.v2.min.js" type="text/javascript"></script>
+    <script src="js/dagre/dagre.js" type="text/javascript"></script>
+    <script src="js/jquery/jquery.ui.position.js" type="text/javascript"></script>
+    <script src="js/jquery/jquery.contextMenu.js" type="text/javascript"></script>
+<title>IFT3150</title>
+  </head>
+  <body>
+    <h1>Visualisation de graphe</h1>
+    
+    <h2>Choix du fichier dot à visualiser</h2>
+    <label for="file">Fichier : </label><input type="file" id="file"></input>
+    
+    <h2>Graphe</h2>
+    <div id="nodesFilter"></div>
+    <div id="resizable" class="ui-widget-content">
+    <svg>
+      <defs>
+        <marker id="arrowhead"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerUnits="strokeWidth"
+                markerWidth="8"
+                markerHeight="5"
+                orient="auto"
+                style="fill: #333">
+          <path d="M 0 0 L 10 5 L 0 10 z"></path>
+        </marker>
+        <marker id="redarrowhead"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerUnits="strokeWidth"
+                markerWidth="8"
+                markerHeight="5"
+                orient="auto"
+                stroke="red"
+                style="fill: red">
+          <path d="M 0 0 L 10 5 L 0 10 z"></path>
+        </marker>
+      </defs>
+      <g transform="translate(5,5)"></g>
+    </svg>
+    <div id="nodeInfos">Cliquez sur un noeud pour obtenir ses informations</div>
+    </div>
+    <h2>Liste des noeuds cachés<img src="images/help.png" width=15 title="Cliquez sur l'id pour rétablir le noeud."/> </h2>
+    <p id="hiddenNodes"></p>
+    <h2>Connexion entre noeuds</h2>
+    <p id="nodeLink"></p>
+    <script src="js/visualDot.js" type="text/javascript"></script>
+  </body>
+</html>
