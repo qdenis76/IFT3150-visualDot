@@ -1,8 +1,10 @@
 var svg = d3.select("svg");
 var svgGroup = svg.select("g");
 var nodes, edges, result, nodeIds, edgeIds;
+var coloredNodes = false;
 
 $(function(){
+	$("#toolbar").hide();
 	$(document).tooltip();
 	$("#resizable").resizable({ maxWidth: $("body").width(), minWidth: $("body").width()});
 	$("#file").change(function() {
@@ -92,6 +94,10 @@ function draw(nodeData, edgeData) {
 		initMenu("#node-"+i);
 	}
 	initSlider();
+	initReset();
+	initUserObjectSelection();
+	$("#toolbar").show();
+	colorNode();
 }
 
 function addLabels() {
@@ -250,15 +256,25 @@ function update() {
 }
 
 function initClickNode() {
-	$(".node").click( function(evt) {
+	$(".node").click(function(evt) {
 		if (evt.ctrlKey) {
 			hideNode($(this));
 		}
-		if (evt.shiftKey) {
+		else {
+			if (evt.shiftKey) {
+				resetColoredItems();
+				displayNodeLinks($(this));
+				coloredNodes = true;
+			} else {
+				displayNodeInfos($(this));
+			}
+		}
+	});
+	$("svg").click(function(evt) {
+		var target = evt.target;
+		if(coloredNodes && target.id=="root") {
 			resetColoredItems();
-			displayNodeLinks($(this));
-		} else {
-			displayNodeInfos($(this));
+			coloredNodes = false;
 		}
 	});
 }
@@ -299,7 +315,6 @@ function showAllNodes() {
 
 function displayNodeLinks(node) {
 	var nodeId = nodeIds[node.attr("id").substring(5,node.attr("id").length)];
-	$("#"+node.attr("id")+" rect").attr("style","stroke:green").attr("class","colored-node");
 	$('#nodeLink').empty();
 	$("#nodeLink").append("<h3>Lien(s) du noeud <span class='red'>"+nodeId+"</span></h3>");
 	for(var i=0;i<result.nodes.length; i++) {
@@ -320,6 +335,7 @@ function displayNodeLinks(node) {
 			}
 		}
 	}
+	$("#"+node.attr("id")+" rect").attr("style","stroke:green").attr("class","colored-node");
 //	$("html, body").animate({ scrollTop: $(document).height() }, "slow");
 }	
 
@@ -342,8 +358,11 @@ function findSvgId(id,type) {
 }
 
 function resetColoredItems() {
-	$(".colored-node").attr("style","stroke:#333").attr("class","");
-	$(".colored-edge").attr("style","stroke:#333").attr("class","").attr("marker-end","url(#arrowhead)");	
+	$('#nodeLink').empty();
+	colorNode();
+	$(".colored-node").attr("class","");
+	$(".colored-edge + g text tspan").attr("fill","");
+	$(".colored-edge").attr("style","stroke:#333").attr("class","").attr("marker-end","url(#arrowhead)");
 }
 
 function initMenu(id) {
@@ -360,15 +379,16 @@ function initMenu(id) {
 					callback: function(key, options) {
 						resetColoredItems();
 						displayNodeLinks($(this));
-					}
-				},
-				"sep1":"--------",
-				"cancel": {name: "Annuler", 
-					callback: function(key, options) {
-						$('#nodeLink').empty();
-						resetColoredItems();
+						coloredNodes = true;
 					}
 				}
+//				"sep1":"--------",
+//				"cancel": {name: "Annuler", 
+//					callback: function(key, options) {
+//						$('#nodeLink').empty();
+//						resetColoredItems();
+//					}
+//				}
 			}
 		});
 	});
@@ -445,7 +465,7 @@ function maxNodeNumber() {
 
 function nodesFilter(min,max) {
 	for(var i=0;i<result.nodes.length; i++) {
-		if((parseInt(result.nodes[i].vdNumber) > max || parseInt(result.nodes[i].vdNumber) < min) && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes") {
+		if((parseInt(result.nodes[i].vdNumber) > max || parseInt(result.nodes[i].vdNumber) < min) && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only") {
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered","yes");
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).hide();
 			for(var k in edgeIds) {
@@ -454,12 +474,16 @@ function nodesFilter(min,max) {
 				}
 			}
 		}
-		if(parseInt(result.nodes[i].vdNumber) <= max && parseInt(result.nodes[i].vdNumber) >= min && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")=="yes") {
+		if(parseInt(result.nodes[i].vdNumber) <= max && parseInt(result.nodes[i].vdNumber) >= min && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only") {
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered","");
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).show();
 			for(var j=0;j<result.edges.length; j++) {
-				if(result.edges[j].id.indexOf(result.nodes[i].id+"-")!==-1 && $("#node-"+findSvgId(result.edges[j].source.id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.edges[j].target.id,"node")).attr("filtered")!=="yes") {
-					$("#edge-"+findSvgId(result.edges[j].id,"edge")).show();
+				if (result.edges[j].id.indexOf(result.nodes[i].id + "-") !== -1
+						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("filtered") !== "yes"
+						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("filtered") !== "yes"
+						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("userObject") !== "only"
+						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("userObject") !== "only") {
+					$("#edge-" + findSvgId(result.edges[j].id, "edge")).show();
 				}
 			}
 		}
@@ -474,19 +498,110 @@ function displayNodeInfos(node) {
 		if(nodeId==result.nodes[i].id) {
 			infos += result.nodes[i].vdType;
 			infos += "<h1>Methods</h1>";
-			infos += replaceAll(result.nodes[i].vdMethods,",",", ");
+			infos += replaceAll(result.nodes[i].vdMethods,",","<br>");
 			infos += "<h1>Properties</h1>";
-			infos += replaceAll(result.nodes[i].vdProps,",",", ");
+			var props = result.nodes[i].vdProps.split(",");
+			for(var j=0;j<props.length-1; j++) {
+				infos += "<span class=\"prop\" id=\""+result.nodes[i].id+"_"+trim(props[j])+"\" >"+trim(props[j])+"</span>, ";
+			}
+			infos += "<span class=\"prop\" id=\""+result.nodes[i].id+"_"+trim(props[props.length-1])+"\" >"+trim(props[props.length-1])+"</span>";			
 			infos += "<h1>Number</h1>";
 			infos += result.nodes[i].vdNumber;
 			infos += "<h1>File reference</h1>";
 			infos += result.nodes[i].vdFile;
+			infos += "<h1>User object</h1>";
+			infos += result.nodes[i].vdUserObject;
 		}
 	}
 	$("#nodeInfos").append(infos);
+	$(".prop").click(function(evt) {
+		resetColoredItems();
+		colorEdgeFromProperty($(this));
+	});
+}
+
+function colorEdgeFromProperty(property) {
+	var nodeId = property.attr("id").split("_")[0];
+	var prop = property.attr("id").split("_")[1];
+	for(var i=0;i<result.nodes.length; i++) {
+		if(nodeId==result.nodes[i].id) {
+			for(var j=0;j<result.edges.length; j++) {
+				if (result.edges[j].id.indexOf(result.nodes[i].id + "-") !== -1 && result.edges[j].vdRelation!="inheritance") {
+					var label = result.edges[j].label.split(",");
+					for(var k=0;k<label.length;k++) {
+						if(prop==trim(label[k])) {
+							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" path").attr("style","stroke:blue").attr("class","colored-edge").attr("marker-end","url(#bluearrowhead)");
+							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" g text tspan").attr("fill","blue");
+							coloredNodes = true;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+function initReset() {
+	$("#reset").click( function(evt) {
+		draw(result.nodes, result.edges);
+	});
+}
+
+function initUserObjectSelection() {
+	$("#userObject").change(function(evt) {
+		if($(this).prop("checked")) {
+			showUserObject("true");
+		} else {
+			showUserObject("false");
+		}
+	});
+}
+
+function showUserObject(boolean) {
+	for(var i=0;i<result.nodes.length; i++) {
+		if(boolean=="true" && result.nodes[i].vdUserObject=="false" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only") {
+			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject","only");
+			$("#node-"+findSvgId(result.nodes[i].id,"node")).hide();
+			for(var k in edgeIds) {
+				if(edgeIds[k].indexOf(result.nodes[i].id+"-") !== -1) {
+					$("#edge-"+k).hide();
+				}
+			}
+		}
+		if(boolean=="false" && result.nodes[i].vdUserObject=="false" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")=="only") {
+			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject","");
+			$("#node-" + findSvgId(result.nodes[i].id, "node")).show();
+			for ( var j = 0; j < result.edges.length; j++) {
+				if (result.edges[j].id.indexOf(result.nodes[i].id + "-") !== -1
+						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("filtered") !== "yes"
+						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("filtered") !== "yes"
+						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("userObject") !== "only"
+						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("userObject") !== "only") {
+					$("#edge-" + findSvgId(result.edges[j].id, "edge")).show();
+				}
+			}
+		}
+	}
+}
+
+function colorNode() {
+	var max = maxNodeNumber();
+	var a = 179/(1-max);
+	var b = 180-a;
+	for(var i=0;i<result.nodes.length; i++) {
+		var vdNumber = parseInt(result.nodes[i].vdNumber);
+		var color = Math.floor(a*vdNumber + b)+'';
+		var rgb = "rgb("+color+","+color+","+color+")";
+		$("#node-"+findSvgId(result.nodes[i].id,"node")+" rect").attr("style","stroke:"+rgb);
+	}
 }
 
 // http://naspinski.net/post/Javascript-replaceAll-function.aspx
 function replaceAll(txt, replace, with_this) {
 	return txt.replace(new RegExp(replace, 'g'),with_this);
 }
+
+//http://www.commentcamarche.net/faq/16294-javascript-trim
+function trim(myString) {
+	return myString.replace(/^\s+/g,'').replace(/\s+$/g,'')
+} 

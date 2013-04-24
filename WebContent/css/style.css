@@ -145,8 +145,8 @@ div.tooltip h1{
 
 #nodesFilter {
 	display: block;
-	margin-bottom: 20px;
 	padding: 5px 0px;
+	margin-bottom: 10px;
 }
 
 #nodeInfos {
@@ -165,4 +165,22 @@ div.tooltip h1{
   border-bottom:1px solid #C1C1C1; 
   margin: 10px 5px;
   width:95%;
+}
+
+#toolbar {
+	display: block;
+	margin-bottom: 10px;
+}
+
+#reset {
+	float: right;
+}
+
+.prop {
+  color: blue;
+  text-decoration: underline;
+}
+
+.prop:hover {
+  cursor: pointer;
 }
