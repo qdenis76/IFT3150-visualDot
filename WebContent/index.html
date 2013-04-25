@@ -11,6 +11,7 @@
     <script src="js/dagre/dagre.js" type="text/javascript"></script>
     <script src="js/jquery/jquery.ui.position.js" type="text/javascript"></script>
     <script src="js/jquery/jquery.contextMenu.js" type="text/javascript"></script>
+    <script src="js/html2canvas/h2c.js" type="text/javascript"></script>
 <title>IFT3150</title>
   </head>
   <body>
@@ -21,7 +22,7 @@
     
     <h2>Graphe</h2>
     <div id="nodesFilter"></div>
-    <div id="toolbar">Afficher seulement les objets utilisateur : <input type="checkbox" id="userObject"><input type="button" value="Redessiner le graphe" id="reset"></div>
+    <div id="toolbar">Afficher seulement les objets utilisateur : <input type="checkbox" id="userObject"><input type="button" value="Redessiner le graphe" id="reset"><input type="button" value="Exporter" id="export"></div>
     <div id="resizable" class="ui-widget-content">
     <svg id="root">
       <defs>
@@ -47,7 +48,7 @@
                 stroke="red"
                 style="fill: red">
           <path d="M 0 0 L 10 5 L 0 10 z"></path>
-          <marker id="bluearrowhead"
+          <marker id="orangearrowhead"
                 viewBox="0 0 10 10"
                 refX="8"
                 refY="5"
@@ -55,8 +56,8 @@
                 markerWidth="8"
                 markerHeight="5"
                 orient="auto"
-                stroke="blue"
-                style="fill: blue">
+                stroke="orange"
+                style="fill: orange">
           <path d="M 0 0 L 10 5 L 0 10 z"></path>
         </marker>
       </defs>

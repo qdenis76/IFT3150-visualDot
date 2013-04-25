@@ -98,6 +98,7 @@ function draw(nodeData, edgeData) {
 	initUserObjectSelection();
 	$("#toolbar").show();
 	colorNode();
+	initExport();
 }
 
 function addLabels() {
@@ -282,6 +283,7 @@ function initClickNode() {
 function hideNode(node) {
 	node.hide(200);
 	var nodeId = nodeIds[node.attr("id").substring(5,node.attr("id").length)];
+	node.attr("invisible","yes");
 	$('#hiddenNodes').append("<p><span class='hiddenNode' id='"+node.attr("id")+"'>"+nodeId+"</span></p>");
 	for(var k in edgeIds) {
 		if(edgeIds[k].indexOf(nodeId+"-") !== -1) {
@@ -293,13 +295,22 @@ function hideNode(node) {
 	});
 }
 
-function showNode(node) {
+function showNode(node) {	
+	$("#"+node.attr("id")).attr("invisible","");
 	$("#hiddenNodes #"+node.attr("id")).remove();
-	$("#"+node.attr("id")).show(200);
-	var nodeId = nodeIds[node.attr("id").substring(5,node.attr("id").length)];
-	for(var k in edgeIds) {
-		if(edgeIds[k].indexOf(nodeId+"-") !== -1) {
-			$("#edge-"+k).show(200);
+	if($("#"+node.attr("id")).attr("filtered")!=="yes" && $("#"+node.attr("id")).attr("userObject")!=="only") {
+		$("#"+node.attr("id")).show(200);
+		var nodeId = nodeIds[node.attr("id").substring(5,node.attr("id").length)];
+		for(var j=0;j<result.edges.length; j++) {
+			if (result.edges[j].id.indexOf(nodeId + "-") !== -1
+					&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("filtered") !== "yes"
+					&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("filtered") !== "yes"
+					&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("userObject") !== "only"
+					&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("userObject") !== "only"
+					&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("invisible") !== "yes"
+					&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("invisible") !== "yes") {
+				$("#edge-" + findSvgId(result.edges[j].id, "edge")).show();
+			}
 		}
 	}
 }
@@ -465,25 +476,31 @@ function maxNodeNumber() {
 
 function nodesFilter(min,max) {
 	for(var i=0;i<result.nodes.length; i++) {
-		if((parseInt(result.nodes[i].vdNumber) > max || parseInt(result.nodes[i].vdNumber) < min) && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only") {
+		if((parseInt(result.nodes[i].vdNumber) > max || parseInt(result.nodes[i].vdNumber) < min)) {
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered","yes");
-			$("#node-"+findSvgId(result.nodes[i].id,"node")).hide();
-			for(var k in edgeIds) {
-				if(edgeIds[k].indexOf(result.nodes[i].id+"-") !== -1) {
-					$("#edge-"+k).hide();
+			if($("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("invisible")!=="yes") {
+				$("#node-"+findSvgId(result.nodes[i].id,"node")).hide();
+				for(var k in edgeIds) {
+					if(edgeIds[k].indexOf(result.nodes[i].id+"-") !== -1) {
+						$("#edge-"+k).hide();
+					}
 				}
 			}
 		}
-		if(parseInt(result.nodes[i].vdNumber) <= max && parseInt(result.nodes[i].vdNumber) >= min && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only") {
+		if(parseInt(result.nodes[i].vdNumber) <= max && parseInt(result.nodes[i].vdNumber) >= min) {
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered","");
-			$("#node-"+findSvgId(result.nodes[i].id,"node")).show();
-			for(var j=0;j<result.edges.length; j++) {
-				if (result.edges[j].id.indexOf(result.nodes[i].id + "-") !== -1
-						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("filtered") !== "yes"
-						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("filtered") !== "yes"
-						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("userObject") !== "only"
-						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("userObject") !== "only") {
-					$("#edge-" + findSvgId(result.edges[j].id, "edge")).show();
+			if($("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("invisible")!=="yes") {
+				$("#node-"+findSvgId(result.nodes[i].id,"node")).show();
+				for(var j=0;j<result.edges.length; j++) {
+					if (result.edges[j].id.indexOf(result.nodes[i].id + "-") !== -1
+							&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("filtered") !== "yes"
+							&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("filtered") !== "yes"
+							&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("userObject") !== "only"
+							&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("userObject") !== "only"
+							&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("invisible") !== "yes"
+							&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("invisible") !== "yes") {
+						$("#edge-" + findSvgId(result.edges[j].id, "edge")).show();
+					}
 				}
 			}
 		}
@@ -530,8 +547,8 @@ function colorEdgeFromProperty(property) {
 					var label = result.edges[j].label.split(",");
 					for(var k=0;k<label.length;k++) {
 						if(prop==trim(label[k])) {
-							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" path").attr("style","stroke:blue").attr("class","colored-edge").attr("marker-end","url(#bluearrowhead)");
-							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" g text tspan").attr("fill","blue");
+							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" path").attr("style","stroke:orange").attr("class","colored-edge").attr("marker-end","url(#orangearrowhead)");
+							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" g text tspan").attr("fill","orange");
 							coloredNodes = true;
 						}
 					}
@@ -559,25 +576,31 @@ function initUserObjectSelection() {
 
 function showUserObject(boolean) {
 	for(var i=0;i<result.nodes.length; i++) {
-		if(boolean=="true" && result.nodes[i].vdUserObject=="false" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")!=="only") {
+		if(boolean=="true" && result.nodes[i].vdUserObject=="false") {
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject","only");
-			$("#node-"+findSvgId(result.nodes[i].id,"node")).hide();
-			for(var k in edgeIds) {
-				if(edgeIds[k].indexOf(result.nodes[i].id+"-") !== -1) {
-					$("#edge-"+k).hide();
+			if($("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("invisible")!=="yes") {
+				$("#node-"+findSvgId(result.nodes[i].id,"node")).hide();
+				for(var k in edgeIds) {
+					if(edgeIds[k].indexOf(result.nodes[i].id+"-") !== -1) {
+						$("#edge-"+k).hide();
+					}
 				}
 			}
 		}
-		if(boolean=="false" && result.nodes[i].vdUserObject=="false" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject")=="only") {
+		if(boolean=="false" && result.nodes[i].vdUserObject=="false") {
 			$("#node-"+findSvgId(result.nodes[i].id,"node")).attr("userObject","");
-			$("#node-" + findSvgId(result.nodes[i].id, "node")).show();
-			for ( var j = 0; j < result.edges.length; j++) {
-				if (result.edges[j].id.indexOf(result.nodes[i].id + "-") !== -1
-						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("filtered") !== "yes"
-						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("filtered") !== "yes"
-						&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("userObject") !== "only"
-						&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("userObject") !== "only") {
-					$("#edge-" + findSvgId(result.edges[j].id, "edge")).show();
+			if($("#node-"+findSvgId(result.nodes[i].id,"node")).attr("filtered")!=="yes" && $("#node-"+findSvgId(result.nodes[i].id,"node")).attr("invisible")!=="yes") {
+				$("#node-" + findSvgId(result.nodes[i].id, "node")).show();
+				for ( var j = 0; j < result.edges.length; j++) {
+					if (result.edges[j].id.indexOf(result.nodes[i].id + "-") !== -1
+							&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("filtered") !== "yes"
+							&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("filtered") !== "yes"
+							&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("userObject") !== "only"
+							&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("userObject") !== "only"
+							&& $("#node-" + findSvgId(result.edges[j].source.id,"node")).attr("invisible") !== "yes"
+							&& $("#node-" + findSvgId(result.edges[j].target.id,"node")).attr("invisible") !== "yes") {
+						$("#edge-" + findSvgId(result.edges[j].id, "edge")).show();
+					}
 				}
 			}
 		}
@@ -596,6 +619,12 @@ function colorNode() {
 	}
 }
 
+function initExport() {
+//	$("#export").click( function(evt) {
+//		convert();
+//	});
+}
+
 // http://naspinski.net/post/Javascript-replaceAll-function.aspx
 function replaceAll(txt, replace, with_this) {
 	return txt.replace(new RegExp(replace, 'g'),with_this);
@@ -604,4 +633,38 @@ function replaceAll(txt, replace, with_this) {
 //http://www.commentcamarche.net/faq/16294-javascript-trim
 function trim(myString) {
 	return myString.replace(/^\s+/g,'').replace(/\s+$/g,'')
-} 
+}
+
+//http://www.kpomservices.com/HTML_to_Canvas.php
+function convert() {
+	dom = document.getElementById('resizable');
+
+	// execute the html2canvas script
+	var script,
+	$this = this,
+	options = this.options,
+	runH2c = function(){
+		try {
+			var canvas =     window.html2canvas([ document.getElementById('resizable') ], {
+				onrendered: function( canvas ) {
+
+				/*
+				canvas is the actual canvas element,
+				to append it to the page call for example
+				*/
+				window.open(canvas.toDataURL());
+				//document.body.appendChild( canvas );
+				}
+			});
+		} catch( e ) {
+			$this.h2cDone = true;
+			log("Error in html2canvas: " + e.message);
+		}
+	};
+
+	if ( window.html2canvas === undefined && script === undefined ) {
+	} else {
+		// html2canvas already loaded, just run it then
+		runH2c();
+	}
+}

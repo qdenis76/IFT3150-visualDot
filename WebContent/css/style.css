@@ -176,6 +176,10 @@ div.tooltip h1{
 	float: right;
 }
 
+#export {
+  float: right;
+}
+
 .prop {
   color: blue;
   text-decoration: underline;
