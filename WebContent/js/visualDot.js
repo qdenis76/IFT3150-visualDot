@@ -122,11 +122,14 @@ function addLabels() {
 	});
 }
 
+// https://github.com/cpettitt/dagre/blob/master/demo/demo.html
 function enableZoom() {
 	svg.call(d3.behavior.zoom().on("zoom", function redraw() {
 		svgGroup.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 	}));
 }
+
+// https://github.com/cpettitt/dagre/blob/master/demo/demo.html
 function ensureTwoControlPoints(d) {
 	var points = d.dagre.points;
 	if (!points.length) {
@@ -139,6 +142,7 @@ function ensureTwoControlPoints(d) {
 	}
 }
 
+// https://github.com/cpettitt/dagre/blob/master/demo/demo.html
 function enableDrag(nodes, edges) {
 	nodes.call(d3.behavior.drag()
 			.origin(function(d) { return {x: d.dagre.x, y: d.dagre.y}; })
@@ -179,6 +183,7 @@ function enableDrag(nodes, edges) {
 			}));
 }
 
+// https://github.com/cpettitt/dagre/blob/master/demo/demo.html
 function translateEdge(e, dx, dy) {
 	e.dagre.points.forEach(function(p) {
 		p.x += dx;
@@ -186,6 +191,7 @@ function translateEdge(e, dx, dy) {
 	});
 }
 
+// https://github.com/cpettitt/dagre/blob/master/demo/demo.html
 function addEdgesCircles(edgeEnter) {
 	edgeEnter
 	.selectAll("circle.cp")
@@ -204,6 +210,7 @@ function addEdgesCircles(edgeEnter) {
 			}));
 }
 
+// https://github.com/cpettitt/dagre/blob/master/demo/demo.html
 function update() {
 	nodes
 	.attr("transform", function(d) {
@@ -284,7 +291,13 @@ function hideNode(node) {
 	node.hide(200);
 	var nodeId = nodeIds[node.attr("id").substring(5,node.attr("id").length)];
 	node.attr("invisible","yes");
-	$('#hiddenNodes').append("<p><span class='hiddenNode' id='"+node.attr("id")+"'>"+nodeId+"</span></p>");
+	var name = "";
+	for(var i=0;i<result.nodes.length; i++) {
+		if(nodeId==result.nodes[i].id) {
+			name = result.nodes[i].vdType;
+		}
+	}
+	$('#hiddenNodes').append("<p><span class='hiddenNode' id='"+node.attr("id")+"'>"+name+"</span></p>");
 	for(var k in edgeIds) {
 		if(edgeIds[k].indexOf(nodeId+"-") !== -1) {
 			$("#edge-"+k).hide(200);
@@ -327,27 +340,34 @@ function showAllNodes() {
 function displayNodeLinks(node) {
 	var nodeId = nodeIds[node.attr("id").substring(5,node.attr("id").length)];
 	$('#nodeLink').empty();
-	$("#nodeLink").append("<h3>Lien(s) du noeud <span class='red'>"+nodeId+"</span></h3>");
+	var name = "";
+	for(var i=0;i<result.nodes.length; i++) {
+		if(nodeId==result.nodes[i].id) {
+			name = result.nodes[i].vdType;
+		}
+	}
+	$("#nodeLink").append("<h3>Lien(s) du noeud <span class='red'>"+name+"</span></h3>");
 	for(var i=0;i<result.nodes.length; i++) {
 		if(nodeId==result.nodes[i].id) {
 			for(var j=0;j<result.nodes[i].outEdges.length; j++) {
 				var type;
 				result.nodes[i].outEdges[j].vdRelation=="association" || result.nodes[i].outEdges[j].style=="dashed" ? type="association" : type="héritage";
-				$("#nodeLink").append("<p>"+nodeId+" <span class='red'>&#8594</span> "+result.nodes[i].outEdges[j].target.id+" ("+type+")</p>");
+				$("#nodeLink").append("<p>"+name+" <span class='red'>&#8594</span> "+result.nodes[i].outEdges[j].target.vdType+" ("+type+")</p>");
 				$("#edge-"+findSvgId(result.nodes[i].outEdges[j].id,"edge")+" path").attr("style","stroke:red").attr("class","colored-edge").attr("marker-end","url(#redarrowhead)");
+				$("#edge-"+findSvgId(result.nodes[i].outEdges[j].id,"edge")+" g text tspan").attr("fill","red");
 				$("#node-"+findSvgId(result.nodes[i].outEdges[j].target.id,"node")+" rect").attr("style","stroke:red").attr("class","colored-node");
 			}
 			for(j=0;j<result.nodes[i].inEdges.length; j++) {
 				var type;
 				result.nodes[i].inEdges[j].vdRelation=="association" || result.nodes[i].inEdges[j].style=="dashed" ? type="association" : type="héritage";
-				$("#nodeLink").append("<p>"+nodeId+" <span class='red'>&#8592</span> "+result.nodes[i].inEdges[j].source.id+" ("+type+")</p>");
+				$("#nodeLink").append("<p>"+name+" <span class='red'>&#8592</span> "+result.nodes[i].inEdges[j].source.vdType+" ("+type+")</p>");
 				$("#edge-"+findSvgId(result.nodes[i].inEdges[j].id,"edge")+" path").attr("style","stroke:red").attr("class","colored-edge").attr("marker-end","url(#redarrowhead)");	
+				$("#edge-"+findSvgId(result.nodes[i].inEdges[j].id,"edge")+" g text tspan").attr("fill","red");
 				$("#node-"+findSvgId(result.nodes[i].inEdges[j].source.id,"node")+" rect").attr("style","stroke:red").attr("class","colored-node");
 			}
 		}
 	}
 	$("#"+node.attr("id")+" rect").attr("style","stroke:green").attr("class","colored-node");
-//	$("html, body").animate({ scrollTop: $(document).height() }, "slow");
 }	
 
 
@@ -393,13 +413,6 @@ function initMenu(id) {
 						coloredNodes = true;
 					}
 				}
-//				"sep1":"--------",
-//				"cancel": {name: "Annuler", 
-//					callback: function(key, options) {
-//						$('#nodeLink').empty();
-//						resetColoredItems();
-//					}
-//				}
 			}
 		});
 	});
@@ -407,7 +420,7 @@ function initMenu(id) {
 
 function initTooltip() {
 	var div = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);					
-	$(".node").on("mouseover", function(d) {
+	$(".node").on("mouseover", function(evt) {
 		var nodeId = nodeIds[$(this).attr("id").substring(5,$(this).attr("id").length)];
 		var tooltipContent = "<h1>Methods</h1>";
 		for(var i=0;i<result.nodes.length; i++) {
@@ -422,9 +435,9 @@ function initTooltip() {
 			}
 		}
 		div.transition().style("opacity", .9);
-		div.html(tooltipContent).style("left", d.pageX+"px").style("top", d.pageY+"px");
+		div.html(tooltipContent).style("left", evt.pageX+"px").style("top", evt.pageY+"px");
 	});
-	$(".node").on("mouseout", function(d) {
+	$(".node").on("mouseout", function(evt) {
 		div.transition().style("opacity", 0);
 	});	
 }
@@ -531,9 +544,18 @@ function displayNodeInfos(node) {
 		}
 	}
 	$("#nodeInfos").append(infos);
-	$(".prop").click(function(evt) {
-		resetColoredItems();
+	$(".prop").on("mouseover", function(evt) {
 		colorEdgeFromProperty($(this));
+	});
+	$(".prop").on("mouseout", function(evt) {
+		if($(".edge-props").attr("colored")=="yes") {
+			$(".edge-props").attr("colored","");
+			$(".edge-props + g text tspan").attr("fill","red");
+			$(".edge-props").attr("style","stroke:red").attr("class","colored-edge").attr("marker-end","url(#redarrowhead)");
+		} else {
+			$(".edge-props + g text tspan").attr("fill","");
+			$(".edge-props").attr("style","stroke:#333").attr("class","").attr("marker-end","url(#arrowhead)");
+		}
 	});
 }
 
@@ -547,7 +569,10 @@ function colorEdgeFromProperty(property) {
 					var label = result.edges[j].label.split(",");
 					for(var k=0;k<label.length;k++) {
 						if(prop==trim(label[k])) {
-							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" path").attr("style","stroke:orange").attr("class","colored-edge").attr("marker-end","url(#orangearrowhead)");
+							if($("#edge-"+findSvgId(result.edges[j].id,"edge")+" path").attr("class")=="colored-edge") {
+								$("#edge-"+findSvgId(result.edges[j].id,"edge")+" path").attr("colored","yes");
+							}
+							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" path").attr("style","stroke:orange").attr("class","edge-props").attr("marker-end","url(#orangearrowhead)");
 							$("#edge-"+findSvgId(result.edges[j].id,"edge")+" g text tspan").attr("fill","orange");
 							coloredNodes = true;
 						}
@@ -619,12 +644,6 @@ function colorNode() {
 	}
 }
 
-function initExport() {
-//	$("#export").click( function(evt) {
-//		convert();
-//	});
-}
-
 // http://naspinski.net/post/Javascript-replaceAll-function.aspx
 function replaceAll(txt, replace, with_this) {
 	return txt.replace(new RegExp(replace, 'g'),with_this);
@@ -633,38 +652,4 @@ function replaceAll(txt, replace, with_this) {
 //http://www.commentcamarche.net/faq/16294-javascript-trim
 function trim(myString) {
 	return myString.replace(/^\s+/g,'').replace(/\s+$/g,'')
-}
-
-//http://www.kpomservices.com/HTML_to_Canvas.php
-function convert() {
-	dom = document.getElementById('resizable');
-
-	// execute the html2canvas script
-	var script,
-	$this = this,
-	options = this.options,
-	runH2c = function(){
-		try {
-			var canvas =     window.html2canvas([ document.getElementById('resizable') ], {
-				onrendered: function( canvas ) {
-
-				/*
-				canvas is the actual canvas element,
-				to append it to the page call for example
-				*/
-				window.open(canvas.toDataURL());
-				//document.body.appendChild( canvas );
-				}
-			});
-		} catch( e ) {
-			$this.h2cDone = true;
-			log("Error in html2canvas: " + e.message);
-		}
-	};
-
-	if ( window.html2canvas === undefined && script === undefined ) {
-	} else {
-		// html2canvas already loaded, just run it then
-		runH2c();
-	}
 }
